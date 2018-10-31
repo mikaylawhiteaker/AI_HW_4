@@ -49,9 +49,14 @@ class AIPlayer(Player):
         # self.const_letters = ['A', 'T', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'F', 'F']
         self.init_population(10)
 
-
+    ##
+    # init_population
+    #
+    # This function initializes the agents gene population with random genes
+    # the size of the population is defined by the size parameter
+    #
     def init_population(self, size):
-        self.fitness = -1 * size
+        self.fitness = [-1] * size
         for i in range(0, size):
             gene = []
             for j in range(0, 13):
@@ -107,44 +112,7 @@ class AIPlayer(Player):
         else:
             return [(0, 0)]
 
-        # numToPlace = 0
-        # # implemented by students to return their next move
-        # if currentState.phase == SETUP_PHASE_1:  # stuff on my side
-        #     numToPlace = 11
-        #     moves = []
-        #     for i in range(0, numToPlace):
-        #         move = None
-        #         while move == None:
-        #             # Choose any x location
-        #             x = random.randint(0, 9)
-        #             # Choose any y location on your side of the board
-        #             y = random.randint(0, 3)
-        #             # Set the move if this space is empty
-        #             if currentState.board[x][y].constr == None and (x, y) not in moves:
-        #                 move = (x, y)
-        #                 # Just need to make the space non-empty. So I threw whatever I felt like in there.
-        #                 currentState.board[x][y].constr == True
-        #         moves.append(move)
-        #     return moves
-        # elif currentState.phase == SETUP_PHASE_2:  # stuff on foe's side
-        #     numToPlace = 2
-        #     moves = []
-        #     for i in range(0, numToPlace):
-        #         move = None
-        #         while move == None:
-        #             # Choose any x location
-        #             x = random.randint(0, 9)
-        #             # Choose any y location on enemy side of the board
-        #             y = random.randint(6, 9)
-        #             # Set the move if this space is empty
-        #             if currentState.board[x][y].constr == None and (x, y) not in moves:
-        #                 move = (x, y)
-        #                 # Just need to make the space non-empty. So I threw whatever I felt like in there.
-        #                 currentState.board[x][y].constr == True
-        #         moves.append(move)
-        #     return moves
-        # else:
-        #     return [(0, 0)]
+
 
     ##
     # getMove
@@ -180,10 +148,36 @@ class AIPlayer(Player):
         return enemyLocations[random.randint(0, len(enemyLocations) - 1)]
 
     ##
+    # eval_fitness
+    #
+    # This function determines the fitness of the current gene
+    #
+    def eval_fitness(self, hasWon):
+        # gene = self.population[self.pop_index]
+        # fitness = self.fitness[self.pop_index]
+        # if len(set(gene)) == len(gene):
+        #     fitness += 1
+        # else:
+        #     fitness -= 10
+        if hasWon:
+            self.fitness[self.pop_index] += 1
+        else:
+            self.fitness[self.pop_index] -= 1
+
+
+    ##
     # registerWin
     #
     # This agent doens't learn
     #
     def registerWin(self, hasWon):
-        # method templaste, not implemented
-        pass
+        # 1. update the fitness of the current gene
+        self.eval_fitness(hasWon)
+        # 2. Judge whether the current gene's fitness has been fully evaluated. If so, advance to
+        # the next gene. ????
+        if self.pop_index + 1 == len(self.population):
+            # self.create_new_pop()
+            self.pop_index = 0
+        else:
+            self.pop_index += 1
+        print(self.fitness)
