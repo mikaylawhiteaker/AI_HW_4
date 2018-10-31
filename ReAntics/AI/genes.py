@@ -16,11 +16,11 @@ from AIPlayerUtils import *
 ##### NOTES ################
 ############################
 
-# A - anthill
-# T - tunnel
-# G - grass
-# F - food
-# E - empty
+# gene[0] - location of anthill
+# gene[1] - location of tunnel
+# gene[2-10] - location of grass
+# gene[11 & 12] - location of enemy foods
+
 
 
 ##
@@ -46,28 +46,34 @@ class AIPlayer(Player):
         self.population = []
         self.pop_index = 0
         self.fitness = []
-        self.const_letters = ['A', 'T', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'F', 'F']
+        # self.const_letters = ['A', 'T', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'F', 'F']
         self.init_population(10)
 
 
     def init_population(self, size):
         self.fitness = -1 * size
         for i in range(0, size):
-            gene = "E" * 100
-            gene_list = list(gene)
-            for letter in self.const_letters:
-                if letter is not 'F':
-                    # Choose any x location
-                    x = random.randint(0, 9)
-                    # Choose any y location on your side of the board
-                    y = random.randint(0, 3)
-                else:
-                    # Choose any x location
-                    x = random.randint(0, 9)
-                    # Choose any y location on your side of the board
-                    y = random.randint(6, 9)
-                gene_list[y*10+x] = letter
-            self.population.append(gene_list)
+            gene = []
+            for j in range(0, 13):
+                pick = None
+
+                while pick == None:
+                    if j < (13 - 2):
+                        # Choose any x location
+                        x = random.randint(0, 9)
+                        # Choose any y location on your side of the board
+                        y = random.randint(0, 3)
+                    else:
+                        # Choose any x location
+                        x = random.randint(0, 9)
+                        # Choose any y location on your side of the board
+                        y = random.randint(6, 9)
+                    location = y * 10 + x + 65
+                    if chr(location) not in gene:
+                        pick = location
+
+                gene.append(chr(pick))
+            self.population.append(gene)
         print(self.population)
 
     ##
@@ -85,20 +91,18 @@ class AIPlayer(Player):
     # Return: The coordinates of where the construction is to be placed
     ##
     def getPlacement(self, currentState):
+        gene = self.population[self.pop_index]
         if currentState.phase == SETUP_PHASE_1:
             moves = []
-            gene = self.population[self.pop_index]
-            moves.append( (gene.index('A') % 10, int(gene.index('A') / 10)) )
-            moves.append( (gene.index('T') % 10, int(gene.index('T') / 10)) )
-            grasses = [i for i, e in enumerate() if e == 'G']
-            for grass in grasses:
-                moves.append((grass%10, int(grass/10)))
+            for i in range(0, 11):
+                location = ord(gene[i]) - 65
+                moves.append(((location % 10), int(location / 10)))
             return moves
         elif currentState.phase == SETUP_PHASE_2:
             moves = []
-            foods = [i for i, e in enumerate() if e == 'F']
-            for food in foods:
-                moves.append((food%10, int(food/10)))
+            for i in range(11, 13):
+                location = ord(gene[i]) - 65
+                moves.append(((location % 10), int(location / 10)))
             return moves
         else:
             return [(0, 0)]
