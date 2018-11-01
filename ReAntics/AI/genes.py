@@ -80,6 +80,7 @@ class AIPlayer(Player):
                 gene.append(chr(pick))
             self.population.append(gene)
         print(self.population)
+        self.mating(self.population[0], self.population[1])
 
     ##
     # getPlacement
@@ -112,7 +113,44 @@ class AIPlayer(Player):
         else:
             return [(0, 0)]
 
-
+        # numToPlace = 0
+        # # implemented by students to return their next move
+        # if currentState.phase == SETUP_PHASE_1:  # stuff on my side
+        #     numToPlace = 11
+        #     moves = []
+        #     for i in range(0, numToPlace):
+        #         move = None
+        #         while move == None:
+        #             # Choose any x location
+        #             x = random.randint(0, 9)
+        #             # Choose any y location on your side of the board
+        #             y = random.randint(0, 3)
+        #             # Set the move if this space is empty
+        #             if currentState.board[x][y].constr == None and (x, y) not in moves:
+        #                 move = (x, y)
+        #                 # Just need to make the space non-empty. So I threw whatever I felt like in there.
+        #                 currentState.board[x][y].constr == True
+        #         moves.append(move)
+        #     return moves
+        # elif currentState.phase == SETUP_PHASE_2:  # stuff on foe's side
+        #     numToPlace = 2
+        #     moves = []
+        #     for i in range(0, numToPlace):
+        #         move = None
+        #         while move == None:
+        #             # Choose any x location
+        #             x = random.randint(0, 9)
+        #             # Choose any y location on enemy side of the board
+        #             y = random.randint(6, 9)
+        #             # Set the move if this space is empty
+        #             if currentState.board[x][y].constr == None and (x, y) not in moves:
+        #                 move = (x, y)
+        #                 # Just need to make the space non-empty. So I threw whatever I felt like in there.
+        #                 currentState.board[x][y].constr == True
+        #         moves.append(move)
+        #     return moves
+        # else:
+        #     return [(0, 0)]
 
     ##
     # getMove
@@ -125,14 +163,51 @@ class AIPlayer(Player):
     ##
     def getMove(self, currentState):
         moves = listAllLegalMoves(currentState)
-        selectedMove = moves[random.randint(0, len(moves) - 1)];
+        selectedMove = moves[random.randint(0, len(moves) - 1)]
 
         # don't do a build move if there are already 3+ ants
         numAnts = len(currentState.inventories[currentState.whoseTurn].ants)
         while (selectedMove.moveType == BUILD and numAnts >= 3):
-            selectedMove = moves[random.randint(0, len(moves) - 1)];
+            selectedMove = moves[random.randint(0, len(moves) - 1)]
 
         return selectedMove
+
+    #
+    #
+    #
+    #
+    #
+    ##
+    def mating(self, parent1, parent2):
+        child1 = []
+        child2 = []
+
+        # Crossover
+        for j in range(0, 13):
+            if random.randint(0, 1) == 0:
+                child1.append(parent1[j])
+                child2.append(parent2[j])
+            else:
+                child1.append(parent2[j])
+                child2.append(parent1[j])
+
+        print("P1: " + str(parent1))
+        print("P2: " + str(parent2))
+        print("C1: " + str(child1))
+        print("C2: " + str(child2))
+
+        # Mutations
+        ran = random.randint(0, 100)
+        mutationChance = 25
+
+
+        #if ran <= mutationChance:
+
+
+
+
+        pass
+
 
     ##
     # getAttack
