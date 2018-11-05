@@ -1,6 +1,9 @@
   # -*- coding: latin-1 -*-
 import random
 import sys
+
+#from ReAntics.Player import Player
+
 sys.path.append("..")  #so other modules can be found in parent dir
 from Player import *
 from Constants import *

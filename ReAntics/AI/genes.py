@@ -105,52 +105,27 @@ class AIPlayer(Player):
                 moves.append(((location % 10), int(location / 10)))
             return moves
         elif currentState.phase == SETUP_PHASE_2:
+            while not self.valid_gene(currentState, gene):
+                for n in range(11, 13):
+                    # Choose any x location
+                    x = random.randint(0, 9)
+                    # Choose any y location on your side of the board
+                    y = random.randint(6, 9)
+                    location = y * 10 + x + 65
+                    if chr(location) not in gene:
+                        pick = location
+                    gene[n] = chr(pick)
             moves = []
             for i in range(11, 13):
                 location = ord(gene[i]) - 65
-                moves.append(((location % 10), int(location / 10)))
+                x = location % 10
+                y = int(location / 10)
+                if currentState.board[x][y].constr is None:
+                    move = (x, y)
+                    moves.append(move)
             return moves
         else:
             return [(0, 0)]
-
-        # numToPlace = 0
-        # # implemented by students to return their next move
-        # if currentState.phase == SETUP_PHASE_1:  # stuff on my side
-        #     numToPlace = 11
-        #     moves = []
-        #     for i in range(0, numToPlace):
-        #         move = None
-        #         while move == None:
-        #             # Choose any x location
-        #             x = random.randint(0, 9)
-        #             # Choose any y location on your side of the board
-        #             y = random.randint(0, 3)
-        #             # Set the move if this space is empty
-        #             if currentState.board[x][y].constr == None and (x, y) not in moves:
-        #                 move = (x, y)
-        #                 # Just need to make the space non-empty. So I threw whatever I felt like in there.
-        #                 currentState.board[x][y].constr == True
-        #         moves.append(move)
-        #     return moves
-        # elif currentState.phase == SETUP_PHASE_2:  # stuff on foe's side
-        #     numToPlace = 2
-        #     moves = []
-        #     for i in range(0, numToPlace):
-        #         move = None
-        #         while move == None:
-        #             # Choose any x location
-        #             x = random.randint(0, 9)
-        #             # Choose any y location on enemy side of the board
-        #             y = random.randint(6, 9)
-        #             # Set the move if this space is empty
-        #             if currentState.board[x][y].constr == None and (x, y) not in moves:
-        #                 move = (x, y)
-        #                 # Just need to make the space non-empty. So I threw whatever I felt like in there.
-        #                 currentState.board[x][y].constr == True
-        #         moves.append(move)
-        #     return moves
-        # else:
-        #     return [(0, 0)]
 
     ##
     # getMove
@@ -179,35 +154,33 @@ class AIPlayer(Player):
     #
     ##
     def mating(self, parent1, parent2):
+        # Create two child genes
         child1 = []
         child2 = []
 
+        # Set mutation chance, percent out of 100
+        mutationChance = 25  # percent
+
         # Crossover
         for j in range(0, 13):
-            if random.randint(0, 1) == 0:
+            # Mutations
+            ranMutation = random.randint(0, 100)
+            randSwitch = random.randint(0, 1)
+            if randSwitch == 0:
                 child1.append(parent1[j])
                 child2.append(parent2[j])
             else:
                 child1.append(parent2[j])
                 child2.append(parent1[j])
 
+        print("\n")
+        print("=====Mating of two genes=====")
         print("P1: " + str(parent1))
         print("P2: " + str(parent2))
         print("C1: " + str(child1))
         print("C2: " + str(child2))
 
-        # Mutations
-        ran = random.randint(0, 100)
-        mutationChance = 25
-
-
-        #if ran <= mutationChance:
-
-
-
-
         pass
-
 
     ##
     # getAttack
@@ -234,25 +207,48 @@ class AIPlayer(Player):
         #     fitness += 1
         # else:
         #     fitness -= 10
+        # TODO: should we count the number of moves it took.  the more turns, the better the gene is theoretically.
         if hasWon:
             self.fitness[self.pop_index] += 1
         else:
             self.fitness[self.pop_index] -= 1
 
-
     ##
     # registerWin
     #
-    # This agent doens't learn
+    # This agent learns from the past games
     #
     def registerWin(self, hasWon):
         # 1. update the fitness of the current gene
         self.eval_fitness(hasWon)
         # 2. Judge whether the current gene's fitness has been fully evaluated. If so, advance to
         # the next gene. ????
+        # TODO: go to next gene to evaluate for next game. If at end of stack then generate two new genes based on fitness
+        #
         if self.pop_index + 1 == len(self.population):
             # self.create_new_pop()
             self.pop_index = 0
         else:
             self.pop_index += 1
         print(self.fitness)
+
+    ##
+    # valid_gene
+    #
+    # checks if the given gene is valid in the context of the current state
+    #
+    #
+    def valid_gene(self, currentState, gene):
+        for i in range(0, 13):
+            if gene.count(gene[i]) > 1:  # If duplicate characters, return false
+                return False
+        for n in range(11, 13):
+            location = ord(gene[n]) - 65
+            x = location % 10
+            y = int(location / 10)
+            # Check if valid food placement based on enemy constructs
+            if currentState.board[x][y].constr is not None:
+                return False
+        return True
+
+

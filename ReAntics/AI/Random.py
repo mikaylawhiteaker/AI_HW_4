@@ -118,6 +118,8 @@ class AIPlayer(Player):
         #Attack a random enemy.
         return enemyLocations[random.randint(0, len(enemyLocations) - 1)]
 
+
+
     ##
     #registerWin
     #
