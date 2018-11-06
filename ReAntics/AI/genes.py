@@ -10,7 +10,14 @@ from Move import Move
 from GameState import *
 from AIPlayerUtils import *
 
-
+##############################
+#
+# Author: Mikayla Whiteaker
+# Author: Chris Lytle
+#
+# Version: November 2018
+#
+##############################
 
 ############################
 ##### NOTES ################
@@ -20,8 +27,6 @@ from AIPlayerUtils import *
 # gene[1] - location of tunnel
 # gene[2-10] - location of grass
 # gene[11 & 12] - location of enemy foods
-
-
 
 ##
 # AIPlayer
@@ -48,6 +53,7 @@ class AIPlayer(Player):
         self.fitness = []
         # self.const_letters = ['A', 'T', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'F', 'F']
         self.init_population(10)
+        self.moves = 0
 
     ##
     # init_population
@@ -61,8 +67,7 @@ class AIPlayer(Player):
             gene = []
             for j in range(0, 13):
                 pick = None
-
-                while pick == None:
+                while pick is None:
                     if j < (13 - 2):
                         # Choose any x location
                         x = random.randint(0, 9)
@@ -80,7 +85,6 @@ class AIPlayer(Player):
                 gene.append(chr(pick))
             self.population.append(gene)
         print(self.population)
-        self.mating(self.population[0], self.population[1])
 
     ##
     # getPlacement
@@ -97,6 +101,7 @@ class AIPlayer(Player):
     # Return: The coordinates of where the construction is to be placed
     ##
     def getPlacement(self, currentState):
+        self.moves = 0
         gene = self.population[self.pop_index]
         if currentState.phase == SETUP_PHASE_1:
             moves = []
@@ -107,14 +112,16 @@ class AIPlayer(Player):
         elif currentState.phase == SETUP_PHASE_2:
             while not self.valid_gene(currentState, gene):
                 for n in range(11, 13):
-                    # Choose any x location
-                    x = random.randint(0, 9)
-                    # Choose any y location on your side of the board
-                    y = random.randint(6, 9)
-                    location = y * 10 + x + 65
-                    if chr(location) not in gene:
-                        pick = location
-                    gene[n] = chr(pick)
+                    pick = None
+                    while pick is None:
+                        # Choose any x location
+                        x = random.randint(0, 9)
+                        # Choose any y location on your side of the board
+                        y = random.randint(6, 9)
+                        location = y * 10 + x + 65
+                        if chr(location) not in gene:
+                            pick = location
+                            gene[n] = chr(pick)
             moves = []
             for i in range(11, 13):
                 location = ord(gene[i]) - 65
@@ -137,6 +144,7 @@ class AIPlayer(Player):
     # Return: The Move to be made
     ##
     def getMove(self, currentState):
+        self.moves += 1
         moves = listAllLegalMoves(currentState)
         selectedMove = moves[random.randint(0, len(moves) - 1)]
 
@@ -145,6 +153,8 @@ class AIPlayer(Player):
         while (selectedMove.moveType == BUILD and numAnts >= 3):
             selectedMove = moves[random.randint(0, len(moves) - 1)]
 
+
+        #asciiPrintState(currentState)
         return selectedMove
 
     #
@@ -163,18 +173,22 @@ class AIPlayer(Player):
 
         # Crossover
         for j in range(0, 13):
-            # Mutations
-            ranMutation = random.randint(0, 100)
+            ranMutation = random.randint(0, 100)  # random chance of Mutation
             randSwitch = random.randint(0, 1)
-            if randSwitch == 0:
+            if j <= 7:
+                # Should not have to worry about crossover for first 7 elements
                 child1.append(parent1[j])
                 child2.append(parent2[j])
             else:
-                child1.append(parent2[j])
-                child2.append(parent1[j])
+                if parent2 not in child1:
+                    child1.append(parent2[j])
+                    child2.append(parent1[j])
+                else:
+                    child1.append(parent1[j])
+                    child2.append(parent2[j])
 
-        print("\n")
         print("=====Mating of two genes=====")
+        print("test: " + self.printGene(parent1))
         print("P1: " + str(parent1))
         print("P2: " + str(parent2))
         print("C1: " + str(child1))
@@ -219,6 +233,8 @@ class AIPlayer(Player):
     # This agent learns from the past games
     #
     def registerWin(self, hasWon):
+        if self.moves == 0:
+            print("something went wrong")
         # 1. update the fitness of the current gene
         self.eval_fitness(hasWon)
         # 2. Judge whether the current gene's fitness has been fully evaluated. If so, advance to
@@ -230,7 +246,11 @@ class AIPlayer(Player):
             self.pop_index = 0
         else:
             self.pop_index += 1
+        print("=====Fitness Scores Round " + str(self.pop_index) + "=====")
         print(self.fitness)
+        print(self.print_gene(self.population[self.pop_index]))
+        # TODO: Print out highest fitness score using asciiPrintState(state)
+        # TODO: Output piped to file
 
     ##
     # valid_gene
@@ -250,5 +270,36 @@ class AIPlayer(Player):
             if currentState.board[x][y].constr is not None:
                 return False
         return True
+
+    def print_gene(self, gene):
+        file = open('output.txt', 'w')
+        print("=====Gene=====")
+        print("original gene: " + str(gene))
+        anthill = ord(gene[0]) - 65
+        print("Anthill: [" + str(anthill % 10) + ", " + str(int(anthill / 10)) + "]")
+        tunnel = ord(gene[1]) - 65
+        print("Tunnel: [" + str(tunnel % 10) + ", " + str(int(tunnel / 10)) + "]")
+        grass1 = ord(gene[2]) - 65
+        print("grass 1: [" + str(grass1 % 10) + ", " + str(int(grass1 / 10)) + "]")
+        grass2 = ord(gene[3]) - 65
+        print("grass 2: [" + str(grass2 % 10) + ", " + str(int(grass2 / 10)) + "]")
+        grass3 = ord(gene[4]) - 65
+        print("grass 3: [" + str(grass3 % 10) + ", " + str(int(grass3 / 10)) + "]")
+        grass4 = ord(gene[5]) - 65
+        print("grass 4: [" + str(grass4 % 10) + ", " + str(int(grass4 / 10)) + "]")
+        grass5 = ord(gene[6]) - 65
+        print("grass 5: [" + str(grass5 % 10) + ", " + str(int(grass5 / 10)) + "]")
+        grass6 = ord(gene[7]) - 65
+        print("grass 6: [" + str(grass6 % 10) + ", " + str(int(grass6 / 10)) + "]")
+        grass7 = ord(gene[8]) - 65
+        print("grass 7: [" + str(grass7 % 10) + ", " + str(int(grass7 / 10)) + "]")
+        grass8 = ord(gene[9]) - 65
+        print("grass 8: [" + str(grass8 % 10) + ", " + str(int(grass8 / 10)) + "]")
+        grass9 = ord(gene[10]) - 65
+        print("grass 9: [" + str(grass9 % 10) + ", " + str(int(grass9 / 10)) + "]")
+        food1 = ord(gene[11]) - 65
+        print("food 1: [" + str(food1 % 10) + ", " + str(int(food1 / 10)) + "]")
+        food2 = ord(gene[12]) - 65
+        print("food 2: [" + str(food2 % 10) + ", " + str(int(food2 / 10)) + "]")
 
 
