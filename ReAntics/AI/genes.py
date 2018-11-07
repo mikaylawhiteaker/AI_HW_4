@@ -54,6 +54,10 @@ class AIPlayer(Player):
         # self.const_letters = ['A', 'T', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'F', 'F']
         self.init_population(10)
         self.moves = 0
+        self.booger_const = [(9,9), (9-5, 9-1),
+                    (9-0,9-3), (9-1,9-2), (9-2,9-1), (9-3,9-0), \
+                    (9-0,9-2), (9-1,9-1), (9-2,9-0), \
+                    (9-0,9-1), (9-1,9-0) ]
 
     ##
     # init_population
@@ -62,7 +66,7 @@ class AIPlayer(Player):
     # the size of the population is defined by the size parameter
     #
     def init_population(self, size):
-        self.fitness = [-1] * size
+        self.fitness = [0] * size
         for i in range(0, size):
             gene = []
             for j in range(0, 13):
@@ -110,7 +114,7 @@ class AIPlayer(Player):
                 moves.append(((location % 10), int(location / 10)))
             return moves
         elif currentState.phase == SETUP_PHASE_2:
-            while not self.valid_gene(currentState, gene):
+            while not self.valid_gene(gene):
                 for n in range(11, 13):
                     pick = None
                     while pick is None:
@@ -180,21 +184,21 @@ class AIPlayer(Player):
                 child1.append(parent1[j])
                 child2.append(parent2[j])
             else:
-                if parent2 not in child1:
+                if parent2[j] not in child1:
                     child1.append(parent2[j])
                     child2.append(parent1[j])
                 else:
                     child1.append(parent1[j])
                     child2.append(parent2[j])
 
-        print("=====Mating of two genes=====")
-        print("test: " + self.printGene(parent1))
-        print("P1: " + str(parent1))
-        print("P2: " + str(parent2))
-        print("C1: " + str(child1))
-        print("C2: " + str(child2))
+        # print("=====Mating of two genes=====")
+        # print("test: " + self.print_gene(parent1))
+        # print("P1: " + str(parent1))
+        # print("P2: " + str(parent2))
+        # print("C1: " + str(child1))
+        # print("C2: " + str(child2))
 
-        pass
+        return [child1, child2]
 
     ##
     # getAttack
@@ -215,17 +219,29 @@ class AIPlayer(Player):
     # This function determines the fitness of the current gene
     #
     def eval_fitness(self, hasWon):
-        # gene = self.population[self.pop_index]
-        # fitness = self.fitness[self.pop_index]
-        # if len(set(gene)) == len(gene):
-        #     fitness += 1
-        # else:
-        #     fitness -= 10
         # TODO: should we count the number of moves it took.  the more turns, the better the gene is theoretically.
+        print("moves")
+        print(self.moves)
+        self.fitness[self.pop_index] += self.moves / 400
+
         if hasWon:
             self.fitness[self.pop_index] += 1
         else:
             self.fitness[self.pop_index] -= 1
+
+
+    def create_new_pop(self):
+        print("CREATE NEW POP")
+        new_pop = []
+        sorted_fitness = list(reversed(sorted(self.fitness)))
+        for i in range(0, 5):
+            i1 = self.fitness.index(sorted_fitness[i*2])
+            i2 = self.fitness.index(sorted_fitness[i*2+1])
+            new_pop.extend(self.mating(self.population[i1], self.population[i2]))
+        print(new_pop)
+        self.population = new_pop
+        self.fitness = [0] * len(self.fitness)
+
 
     ##
     # registerWin
@@ -242,13 +258,27 @@ class AIPlayer(Player):
         # TODO: go to next gene to evaluate for next game. If at end of stack then generate two new genes based on fitness
         #
         if self.pop_index + 1 == len(self.population):
-            # self.create_new_pop()
+            self.create_new_pop()
             self.pop_index = 0
+            print(self.valid_gene(self.population[self.pop_index]))
         else:
             self.pop_index += 1
-        print("=====Fitness Scores Round " + str(self.pop_index) + "=====")
-        print(self.fitness)
-        print(self.print_gene(self.population[self.pop_index]))
+            while not self.valid_gene(self.population[self.pop_index]):
+                if(self.pop_index + 1 == len(self.population)):
+                    self.fitness[self.pop_index] = -1 * (2 ^ 63 - 1)
+                    self.create_new_pop()
+                    self.pop_index = 0
+                    break
+                else:
+                    if self.pop_index < len(self.population):
+                        self.fitness[self.pop_index] = -1 * (2 ^ 63 - 1)
+                    self.pop_index += 1
+        print(len(self.population))
+        print(len(self.fitness))
+
+        #print("=====Fitness Scores Round " + str(self.pop_index) + "=====")
+        #print(self.fitness)
+        # print(self.print_gene(self.population[self.pop_index]))
         # TODO: Print out highest fitness score using asciiPrintState(state)
         # TODO: Output piped to file
 
@@ -258,7 +288,7 @@ class AIPlayer(Player):
     # checks if the given gene is valid in the context of the current state
     #
     #
-    def valid_gene(self, currentState, gene):
+    def valid_gene(self, gene):
         for i in range(0, 13):
             if gene.count(gene[i]) > 1:  # If duplicate characters, return false
                 return False
@@ -267,7 +297,9 @@ class AIPlayer(Player):
             x = location % 10
             y = int(location / 10)
             # Check if valid food placement based on enemy constructs
-            if currentState.board[x][y].constr is not None:
+            print((x,y))
+            if (x,y) in self.booger_const:
+                print("found bad")
                 return False
         return True
 
