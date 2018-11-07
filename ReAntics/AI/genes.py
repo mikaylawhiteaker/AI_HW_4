@@ -153,8 +153,6 @@ class AIPlayer(Player):
         while (selectedMove.moveType == BUILD and numAnts >= 3):
             selectedMove = moves[random.randint(0, len(moves) - 1)]
 
-
-        #asciiPrintState(currentState)
         return selectedMove
 
     #
@@ -169,32 +167,63 @@ class AIPlayer(Player):
         child2 = []
 
         # Set mutation chance, percent out of 100
-        mutationChance = 25  # percent
+        mutationChance = 40  # percent
 
+        # TODO: use this code below to make the mating faster
+        '''
+        # Should not have to worry about bad placements for first 7 elements
+        child1.append(parent1[0:7])
+        child2.append(parent2[0:7])    
+        
+        '''
         # Crossover
         for j in range(0, 13):
             ranMutation = random.randint(0, 100)  # random chance of Mutation
-            randSwitch = random.randint(0, 1)
-            if j <= 7:
-                # Should not have to worry about crossover for first 7 elements
-                child1.append(parent1[j])
-                child2.append(parent2[j])
-            else:
-                if parent2 not in child1:
-                    child1.append(parent2[j])
-                    child2.append(parent1[j])
+            if j <= 6:
+                # Should not have to worry about bad placements for first 7 elements
+                if mutationChance > ranMutation:
+                    child1.append(self.create_mutation(parent1[j]))
+                    child2.append(self.create_mutation(parent2[j]))
                 else:
                     child1.append(parent1[j])
                     child2.append(parent2[j])
+            else:
+                if parent2 not in child1:
+                    if mutationChance > ranMutation:
+                        child1.append(self.create_mutation(parent2[j]))
+                        child2.append(self.create_mutation(parent1[j]))
+                    else:
+                        child1.append(parent2[j])
+                        child2.append(parent1[j])
+                else:
+                    if mutationChance > ranMutation:
+                        child1.append(self.create_mutation(parent1[j]))
+                        child2.append(self.create_mutation(parent2[j]))
+                    else:
+                        child1.append(parent1[j])
+                        child2.append(parent2[j])
 
         print("=====Mating of two genes=====")
-        print("test: " + self.printGene(parent1))
+        # print("test: " + self.print_gene(parent1))
         print("P1: " + str(parent1))
         print("P2: " + str(parent2))
         print("C1: " + str(child1))
         print("C2: " + str(child2))
 
         pass
+
+    def create_mutation(self, gene_char):
+        print("mutation")
+        location = ord(gene_char) - 65
+        x = (location % 10) + random.randint(-1, 1)
+        y = int(location / 10) + random.randint(-1, 1)
+        return chr(y * 10 + x + 65)
+
+
+
+
+
+
 
     ##
     # getAttack
@@ -233,8 +262,6 @@ class AIPlayer(Player):
     # This agent learns from the past games
     #
     def registerWin(self, hasWon):
-        if self.moves == 0:
-            print("something went wrong")
         # 1. update the fitness of the current gene
         self.eval_fitness(hasWon)
         # 2. Judge whether the current gene's fitness has been fully evaluated. If so, advance to
@@ -249,6 +276,7 @@ class AIPlayer(Player):
         print("=====Fitness Scores Round " + str(self.pop_index) + "=====")
         print(self.fitness)
         print(self.print_gene(self.population[self.pop_index]))
+        self.mating(self.population[0], self.population[1])
         # TODO: Print out highest fitness score using asciiPrintState(state)
         # TODO: Output piped to file
 
@@ -271,35 +299,67 @@ class AIPlayer(Player):
                 return False
         return True
 
+    # Writes to an output file.
     def print_gene(self, gene):
         file = open('output.txt', 'w')
         print("=====Gene=====")
+        file.write("=====Gene=====")
+        file.write("\n")
         print("original gene: " + str(gene))
+        file.write("original gene: " + str(gene))
+        file.write("\n")
         anthill = ord(gene[0]) - 65
         print("Anthill: [" + str(anthill % 10) + ", " + str(int(anthill / 10)) + "]")
+        file.write("Anthill: [" + str(anthill % 10) + ", " + str(int(anthill / 10)) + "]")
+        file.write("\n")
         tunnel = ord(gene[1]) - 65
         print("Tunnel: [" + str(tunnel % 10) + ", " + str(int(tunnel / 10)) + "]")
+        file.write("Tunnel: [" + str(tunnel % 10) + ", " + str(int(tunnel / 10)) + "]")
+        file.write("\n")
         grass1 = ord(gene[2]) - 65
         print("grass 1: [" + str(grass1 % 10) + ", " + str(int(grass1 / 10)) + "]")
+        file.write("grass 1: [" + str(grass1 % 10) + ", " + str(int(grass1 / 10)) + "]")
+        file.write("\n")
         grass2 = ord(gene[3]) - 65
         print("grass 2: [" + str(grass2 % 10) + ", " + str(int(grass2 / 10)) + "]")
+        file.write("grass 2: [" + str(grass2 % 10) + ", " + str(int(grass2 / 10)) + "]")
+        file.write("\n")
         grass3 = ord(gene[4]) - 65
         print("grass 3: [" + str(grass3 % 10) + ", " + str(int(grass3 / 10)) + "]")
+        file.write("grass 3: [" + str(grass3 % 10) + ", " + str(int(grass3 / 10)) + "]")
+        file.write("\n")
         grass4 = ord(gene[5]) - 65
         print("grass 4: [" + str(grass4 % 10) + ", " + str(int(grass4 / 10)) + "]")
+        file.write("grass 4: [" + str(grass4 % 10) + ", " + str(int(grass4 / 10)) + "]")
+        file.write("\n")
         grass5 = ord(gene[6]) - 65
         print("grass 5: [" + str(grass5 % 10) + ", " + str(int(grass5 / 10)) + "]")
+        file.write("grass 5: [" + str(grass5 % 10) + ", " + str(int(grass5 / 10)) + "]")
+        file.write("\n")
         grass6 = ord(gene[7]) - 65
         print("grass 6: [" + str(grass6 % 10) + ", " + str(int(grass6 / 10)) + "]")
+        file.write("grass 6: [" + str(grass6 % 10) + ", " + str(int(grass6 / 10)) + "]")
+        file.write("\n")
         grass7 = ord(gene[8]) - 65
         print("grass 7: [" + str(grass7 % 10) + ", " + str(int(grass7 / 10)) + "]")
+        file.write("grass 7: [" + str(grass7 % 10) + ", " + str(int(grass7 / 10)) + "]")
+        file.write("\n")
         grass8 = ord(gene[9]) - 65
         print("grass 8: [" + str(grass8 % 10) + ", " + str(int(grass8 / 10)) + "]")
+        file.write("grass 8: [" + str(grass8 % 10) + ", " + str(int(grass8 / 10)) + "]")
+        file.write("\n")
         grass9 = ord(gene[10]) - 65
         print("grass 9: [" + str(grass9 % 10) + ", " + str(int(grass9 / 10)) + "]")
+        file.write("grass 9: [" + str(grass9 % 10) + ", " + str(int(grass9 / 10)) + "]")
+        file.write("\n")
         food1 = ord(gene[11]) - 65
         print("food 1: [" + str(food1 % 10) + ", " + str(int(food1 / 10)) + "]")
+        file.write("food 1: [" + str(food1 % 10) + ", " + str(int(food1 / 10)) + "]")
+        file.write("\n")
         food2 = ord(gene[12]) - 65
         print("food 2: [" + str(food2 % 10) + ", " + str(int(food2 / 10)) + "]")
+        file.write("food 2: [" + str(food2 % 10) + ", " + str(int(food2 / 10)) + "]")
+        file.write("\n")
+
 
 
