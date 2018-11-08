@@ -239,7 +239,7 @@ class AIPlayer(Player):
 
     def mutate_gene(self, gene):
         rtrnGene = []
-        mutationChance = 30
+        mutationChance = 40
         for i in range(0, 13):
             ranMutation = random.randint(0, 100)  # random number to decide mutation
             if mutationChance < ranMutation:
@@ -289,13 +289,17 @@ class AIPlayer(Player):
         # TODO: should we count the number of moves it took.  the more turns, the better the gene is theoretically.
         #print("moves")
         # print(self.moves)
-        self.fitness[self.pop_index] += self.moves / 400
+        # self.fitness[self.pop_index] += self.moves / 400
         fitnesss = self.moves / 400
 
         if hasWon:
-            self.fitness[self.pop_index] += 1
+            #self.fitness[self.pop_index] += 1
+            fitnesss += 1
         else:
-            self.fitness[self.pop_index] -= 1
+            #self.fitness[self.pop_index] -= 1
+            fitnesss -= 1
+
+        self.fitness_list_per_gene.append(fitnesss)
 
 
     def create_new_pop(self):
@@ -359,14 +363,19 @@ class AIPlayer(Player):
         # 2. Judge whether the current gene's fitness has been fully evaluated. If so, advance to
         # the next gene. ????
         # TODO: go to next gene to evaluate for next game. If at end of stack then generate two new genes based on fitness
-        #
+
 
         if self.pop_index + 1 == len(self.population):
             self.create_new_pop()
             self.pop_index = 0
             print(self.valid_gene(self.population[self.pop_index]))
+        elif len(self.fitness_list_per_gene) < self.games_per_gene:
+            # Take the average of all games played with gene
+            print(str(len(self.fitness_list_per_gene)))
         else:
+            self.fitness[self.pop_index] = sum(self.fitness_list_per_gene) / len(self.fitness_list_per_gene)
             self.pop_index += 1
+            self.fitness_list_per_gene.clear()
             # print("here")
             if not self.valid_gene(self.population[self.pop_index]):
                 print("no good")
@@ -398,6 +407,8 @@ class AIPlayer(Player):
     def valid_gene(self, gene):
         for i in range(0, 13):
             if gene.count(gene[i]) > 1:  # If duplicate characters, return false
+                print("duplicate")
+                #self.print_gene(gene)
                 return False
         for n in range(11, 13):
             location = ord(gene[n]) - 65
@@ -405,8 +416,8 @@ class AIPlayer(Player):
             y = int(location / 10)
             # Check if valid food placement based on enemy constructs
             # print((x,y))
-            if not legalCoord((x, y)):
-                return False
+            #if not legalCoord((x, y)):
+            #    return False
             if (x, y) in self.booger_const:
                 print("found bad")
                 return False
