@@ -52,12 +52,12 @@ class AIPlayer(Player):
         self.pop_index = 0
         self.fitness = []
         # self.const_letters = ['A', 'T', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'F', 'F']
-        self.init_population(10)
         self.moves = 0
         self.booger_const = [(9,9), (9-5, 9-1),
                     (9-0,9-3), (9-1,9-2), (9-2,9-1), (9-3,9-0), \
                     (9-0,9-2), (9-1,9-1), (9-2,9-0), \
                     (9-0,9-1), (9-1,9-0) ]
+        self.init_population(10)
 
     ##
     # init_population
@@ -83,7 +83,7 @@ class AIPlayer(Player):
                         # Choose any y location on your side of the board
                         y = random.randint(6, 9)
                     location = y * 10 + x + 65
-                    if chr(location) not in gene:
+                    if chr(location) not in gene and (x, y) not in self.booger_const:
                         pick = location
 
                 gene.append(chr(pick))
@@ -107,6 +107,7 @@ class AIPlayer(Player):
     def getPlacement(self, currentState):
         self.moves = 0
         gene = self.population[self.pop_index]
+
         if currentState.phase == SETUP_PHASE_1:
             moves = []
             for i in range(0, 11):
@@ -114,23 +115,24 @@ class AIPlayer(Player):
                 moves.append(((location % 10), int(location / 10)))
             return moves
         elif currentState.phase == SETUP_PHASE_2:
-            while not self.valid_gene(gene):
-                for n in range(11, 13):
-                    pick = None
-                    while pick is None:
-                        # Choose any x location
-                        x = random.randint(0, 9)
-                        # Choose any y location on your side of the board
-                        y = random.randint(6, 9)
-                        location = y * 10 + x + 65
-                        if chr(location) not in gene:
-                            pick = location
-                            gene[n] = chr(pick)
+            # while not self.valid_gene(gene):
+            #     for n in range(11, 13):
+            #         pick = None
+            #         while pick is None:
+            #             # Choose any x location
+            #             x = random.randint(0, 9)
+            #             # Choose any y location on your side of the board
+            #             y = random.randint(6, 9)
+            #             location = y * 10 + x + 65
+            #             if chr(location) not in gene:
+            #                 pick = location
+            #                 gene[n] = chr(pick)
             moves = []
             for i in range(11, 13):
                 location = ord(gene[i]) - 65
                 x = location % 10
                 y = int(location / 10)
+                print((x, y))
                 if currentState.board[x][y].constr is None:
                     move = (x, y)
                     moves.append(move)
@@ -181,43 +183,49 @@ class AIPlayer(Player):
 
         '''
         # Crossover
-        for j in range(0, 13):
-            ranMutation = random.randint(0, 100)  # random chance of Mutation
-            if j <= 6:
-                # Should not have to worry about bad placements for first 7 elements
-                if mutationChance > ranMutation:
-                    child1.append(self.create_mutation(parent1[j]))
-                    child2.append(self.create_mutation(parent2[j]))
-                else:
-                    child1.append(parent1[j])
-                    child2.append(parent2[j])
-            else:
-                if parent2 not in child1:
-                    if mutationChance > ranMutation:
-                        child1.append(self.create_mutation(parent2[j]))
-                        child2.append(self.create_mutation(parent1[j]))
-                    else:
-                        child1.append(parent2[j])
-                        child2.append(parent1[j])
-                else:
-                    if mutationChance > ranMutation:
-                        child1.append(self.create_mutation(parent1[j]))
-                        child2.append(self.create_mutation(parent2[j]))
-                    else:
-                        child1.append(parent1[j])
-                        child2.append(parent2[j])
+        cross = random.randint(1, 13)
+        child1.extend(parent1[:cross])
+        child1.extend(parent2[cross:])
+        child2.extend(parent2[:cross])
+        child2.extend(parent1[cross:])
 
-        # print("=====Mating of two genes=====")
+        # for j in range(0, 13):
+        #     ranMutation = random.randint(0, 100)  # random chance of Mutation
+        #     if j <= 6:
+        #         # Should not have to worry about bad placements for first 7 elements
+        #         if mutationChance > ranMutation:
+        #             child1.append(self.create_mutation(parent1[j]))
+        #             child2.append(self.create_mutation(parent2[j]))
+        #         else:
+        #             child1.append(parent1[j])
+        #             child2.append(parent2[j])
+        #     else:
+        #         if parent2 not in child1:
+        #             if mutationChance > ranMutation:
+        #                 child1.append(self.create_mutation(parent2[j]))
+        #                 child2.append(self.create_mutation(parent1[j]))
+        #             else:
+        #                 child1.append(parent2[j])
+        #                 child2.append(parent1[j])
+        #         else:
+        #             if mutationChance > ranMutation:
+        #                 child1.append(self.create_mutation(parent1[j]))
+        #                 child2.append(self.create_mutation(parent2[j]))
+        #             else:
+        #                 child1.append(parent1[j])
+        #                 child2.append(parent2[j])
+
+        print("=====Mating of two genes=====")
         # print("test: " + self.print_gene(parent1))
-        # print("P1: " + str(parent1))
-        # print("P2: " + str(parent2))
-        # print("C1: " + str(child1))
-        # print("C2: " + str(child2))
+        print("P1: " + str(parent1))
+        print("P2: " + str(parent2))
+        print("C1: " + str(child1))
+        print("C2: " + str(child2))
 
         return [child1, child2]
 
     def create_mutation(self, gene_char):
-        print("mutation")
+        # print("mutation")
         location = ord(gene_char) - 65
         x = (location % 10) + random.randint(-1, 1)
         y = int(location / 10) + random.randint(-1, 1)
@@ -249,8 +257,8 @@ class AIPlayer(Player):
     #
     def eval_fitness(self, hasWon):
         # TODO: should we count the number of moves it took.  the more turns, the better the gene is theoretically.
-        print("moves")
-        print(self.moves)
+        #print("moves")
+        # print(self.moves)
         self.fitness[self.pop_index] += self.moves / 400
 
         if hasWon:
@@ -267,7 +275,43 @@ class AIPlayer(Player):
             i1 = self.fitness.index(sorted_fitness[i*2])
             i2 = self.fitness.index(sorted_fitness[i*2+1])
             new_pop.extend(self.mating(self.population[i1], self.population[i2]))
-        print(new_pop)
+        for gene in new_pop:
+            #print(gene)
+            while not self.valid_gene(gene):
+                print("here")
+                for i in range(0, 11):
+                    if gene.count(gene[i]) > 1:  # If duplicate characters, return false
+                        pick = None
+                        while pick is None:
+                            # Choose any x location
+                            x = random.randint(0, 9)
+                            # Choose any y location on your side of the board
+                            y = random.randint(0, 3)
+                            location = y * 10 + x + 65
+                            if chr(location) not in gene:
+                                pick = location
+                                gene[i] = chr(pick)
+                for n in range(11, 13):
+                    location = ord(gene[n]) - 65
+                    x = location % 10
+                    y = int(location / 10)
+                    # Check if valid food placement based on enemy constructs
+                    if (x, y) in self.booger_const:
+                        pick = None
+                        while pick is None:
+                            # Choose any x location
+                            new_x = random.randint(0, 9)
+                            # Choose any y location on your side of the board
+                            new_y = random.randint(6, 9)
+                            print("new x and y")
+                            print9((new_x, new_y))
+                            new_location = new_y * 10 + new_x + 65
+                            if chr(new_location) not in gene and (new_x,new_y) not in self.booger_const:
+                                pick = new_location
+                                gene[n] = chr(pick)
+
+
+        # print(new_pop)
         self.population = new_pop
         self.fitness = [0] * len(self.fitness)
 
@@ -284,24 +328,28 @@ class AIPlayer(Player):
         # the next gene. ????
         # TODO: go to next gene to evaluate for next game. If at end of stack then generate two new genes based on fitness
         #
+
         if self.pop_index + 1 == len(self.population):
             self.create_new_pop()
             self.pop_index = 0
             print(self.valid_gene(self.population[self.pop_index]))
         else:
             self.pop_index += 1
-            while not self.valid_gene(self.population[self.pop_index]):
-                if(self.pop_index + 1 == len(self.population)):
-                    self.fitness[self.pop_index] = -1 * (2 ^ 63 - 1)
-                    self.create_new_pop()
-                    self.pop_index = 0
-                    break
-                else:
-                    if self.pop_index < len(self.population):
-                        self.fitness[self.pop_index] = -1 * (2 ^ 63 - 1)
-                    self.pop_index += 1
-        print(len(self.population))
-        print(len(self.fitness))
+            # print("here")
+            if not self.valid_gene(self.population[self.pop_index]):
+                print("no good")
+            # while not self.valid_gene(self.population[self.pop_index]):
+            #     if(self.pop_index + 1 == len(self.population)):
+            #         self.fitness[self.pop_index] = -1 * (2 ^ 63 - 1)
+            #         self.create_new_pop()
+            #         self.pop_index = 0
+            #         break
+            #     else:
+            #         if self.pop_index < len(self.population):
+            #             self.fitness[self.pop_index] = -1 * (2 ^ 63 - 1)
+            #         self.pop_index += 1
+        # print(len(self.population))
+        # print(len(self.fitness))
 
         #print("=====Fitness Scores Round " + str(self.pop_index) + "=====")
         #print(self.fitness)
@@ -324,9 +372,9 @@ class AIPlayer(Player):
             x = location % 10
             y = int(location / 10)
             # Check if valid food placement based on enemy constructs
-            print((x,y))
+            # print((x,y))
             if (x,y) in self.booger_const:
-                print("found bad")
+                # print("found bad")
                 return False
         return True
 
