@@ -58,7 +58,9 @@ class AIPlayer(Player):
                     (9-0,9-3), (9-1,9-2), (9-2,9-1), (9-3,9-0), \
                     (9-0,9-2), (9-1,9-1), (9-2,9-0), \
                     (9-0,9-1), (9-1,9-0) ]
-        self.init_population(10)
+        self.init_population(30)
+        self.games_per_gene = 10
+        self.fitness_list_per_gene = []
 
     ##
     # init_population
@@ -132,7 +134,7 @@ class AIPlayer(Player):
                 location = ord(gene[i]) - 65
                 x = location % 10
                 y = int(location / 10)
-                print((x, y))
+                # print((x, y))
                 if currentState.board[x][y].constr is None:
                     move = (x, y)
                     moves.append(move)
@@ -288,6 +290,7 @@ class AIPlayer(Player):
         #print("moves")
         # print(self.moves)
         self.fitness[self.pop_index] += self.moves / 400
+        fitnesss = self.moves / 400
 
         if hasWon:
             self.fitness[self.pop_index] += 1
@@ -299,7 +302,7 @@ class AIPlayer(Player):
         print("CREATE NEW POP")
         new_pop = []
         sorted_fitness = list(reversed(sorted(self.fitness)))
-        for i in range(0, 5):
+        for i in range(0, 15):
             i1 = self.fitness.index(sorted_fitness[i*2])
             i2 = self.fitness.index(sorted_fitness[i*2+1])
             new_pop.extend(self.mating(self.population[i1], self.population[i2]))
@@ -324,7 +327,7 @@ class AIPlayer(Player):
                     x = location % 10
                     y = int(location / 10)
                     # Check if valid food placement based on enemy constructs
-                    if (x, y) in self.booger_const:
+                    if (x, y) in self.booger_const or gene.count(gene[n]) > 1:
                         pick = None
                         while pick is None:
                             # Choose any x location
