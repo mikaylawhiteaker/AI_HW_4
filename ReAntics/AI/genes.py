@@ -323,6 +323,7 @@ class AIPlayer(Player):
                                 pick = location
                                 gene[i] = chr(pick)
                 for n in range(11, 13):
+                    #print("HEREEEEE")
                     location = ord(gene[n]) - 65
                     x = location % 10
                     y = int(location / 10)
