@@ -53,6 +53,7 @@ class AIPlayer(Player):
         self.fitness = []
         # self.const_letters = ['A', 'T', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'G', 'F', 'F']
         self.moves = 0
+
         self.booger_const = [(9,9), (9-5, 9-1),
                     (9-0,9-3), (9-1,9-2), (9-2,9-1), (9-3,9-0), \
                     (9-0,9-2), (9-1,9-1), (9-2,9-0), \
@@ -107,7 +108,6 @@ class AIPlayer(Player):
     def getPlacement(self, currentState):
         self.moves = 0
         gene = self.population[self.pop_index]
-
         if currentState.phase == SETUP_PHASE_1:
             moves = []
             for i in range(0, 11):
@@ -189,6 +189,9 @@ class AIPlayer(Player):
         child2.extend(parent2[:cross])
         child2.extend(parent1[cross:])
 
+        self.mutate_gene(child1)
+        self.mutate_gene(child2)
+
         # for j in range(0, 13):
         #     ranMutation = random.randint(0, 100)  # random chance of Mutation
         #     if j <= 6:
@@ -215,26 +218,51 @@ class AIPlayer(Player):
         #                 child1.append(parent1[j])
         #                 child2.append(parent2[j])
 
+        '''
         print("=====Mating of two genes=====")
         # print("test: " + self.print_gene(parent1))
         print("P1: " + str(parent1))
         print("P2: " + str(parent2))
         print("C1: " + str(child1))
         print("C2: " + str(child2))
+        '''
 
         return [child1, child2]
 
     def create_mutation(self, gene_char):
-        # print("mutation")
         location = ord(gene_char) - 65
         x = (location % 10) + random.randint(-1, 1)
         y = int(location / 10) + random.randint(-1, 1)
         return chr(y * 10 + x + 65)
 
+    def mutate_gene(self, gene):
+        rtrnGene = []
+        mutationChance = 30
+        for i in range(0, 13):
+            ranMutation = random.randint(0, 100)  # random number to decide mutation
+            if mutationChance < ranMutation:
+                if i < (13 - 2):
+                    tempGene = self.create_mutation(gene[i])
+                    location = ord(tempGene) - 65
+                    x = (location % 10)
+                    y = int(location / 10)
+                    if legalCoord((x, y)) and y <= 3:
+                        rtrnGene.append(tempGene)
+                    else:
+                        rtrnGene.append(gene[i])
+                else:
+                    tempGene = self.create_mutation(gene[i])
+                    location = ord(tempGene) - 65
+                    x = (location % 10)
+                    y = int(location / 10)
+                    if (x, y) not in self.booger_const and legalCoord((x, y)) and y >= 6:
+                        rtrnGene.append(tempGene)
+                    else:
+                        rtrnGene.append(gene[i])
+            else:
+                rtrnGene.append(gene[i])
 
-
-
-
+        return rtrnGene
 
 
     ##
@@ -304,7 +332,7 @@ class AIPlayer(Player):
                             # Choose any y location on your side of the board
                             new_y = random.randint(6, 9)
                             print("new x and y")
-                            print9((new_x, new_y))
+                            print((new_x, new_y))
                             new_location = new_y * 10 + new_x + 65
                             if chr(new_location) not in gene and (new_x,new_y) not in self.booger_const:
                                 pick = new_location
@@ -373,8 +401,10 @@ class AIPlayer(Player):
             y = int(location / 10)
             # Check if valid food placement based on enemy constructs
             # print((x,y))
-            if (x,y) in self.booger_const:
-                # print("found bad")
+            if not legalCoord((x, y)):
+                return False
+            if (x, y) in self.booger_const:
+                print("found bad")
                 return False
         return True
 
