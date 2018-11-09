@@ -1,6 +1,6 @@
 import random
 import sys
-
+import os
 sys.path.append("..")  # so other modules can be found in parent dir
 from Player import *
 from Constants import *
@@ -58,9 +58,12 @@ class AIPlayer(Player):
                     (9-0,9-3), (9-1,9-2), (9-2,9-1), (9-3,9-0), \
                     (9-0,9-2), (9-1,9-1), (9-2,9-0), \
                     (9-0,9-1), (9-1,9-0) ]
-        self.init_population(30)
         self.games_per_gene = 10
         self.fitness_list_per_gene = []
+        self.currentState = []
+        self.size = 2
+        self.init_population(10)
+
 
     ##
     # init_population
@@ -70,6 +73,7 @@ class AIPlayer(Player):
     #
     def init_population(self, size):
         self.fitness = [0] * size
+        self.currentState = [None] * size
         for i in range(0, size):
             gene = []
             for j in range(0, 13):
@@ -152,6 +156,7 @@ class AIPlayer(Player):
     # Return: The Move to be made
     ##
     def getMove(self, currentState):
+        self.currentState[self.pop_index] = currentState
         self.moves += 1
         moves = listAllLegalMoves(currentState)
         selectedMove = moves[random.randint(0, len(moves) - 1)]
@@ -286,17 +291,12 @@ class AIPlayer(Player):
     # This function determines the fitness of the current gene
     #
     def eval_fitness(self, hasWon):
-        # TODO: should we count the number of moves it took.  the more turns, the better the gene is theoretically.
-        #print("moves")
-        # print(self.moves)
-        # self.fitness[self.pop_index] += self.moves / 400
+        # the more turns, the better the gene is theoretically.
         fitnesss = self.moves / 400
-
+        # did it win?
         if hasWon:
-            #self.fitness[self.pop_index] += 1
             fitnesss += 1
         else:
-            #self.fitness[self.pop_index] -= 1
             fitnesss -= 1
 
         self.fitness_list_per_gene.append(fitnesss)
@@ -306,7 +306,7 @@ class AIPlayer(Player):
         print("CREATE NEW POP")
         new_pop = []
         sorted_fitness = list(reversed(sorted(self.fitness)))
-        for i in range(0, 15):
+        for i in range(0, int(self.size/2)):
             i1 = self.fitness.index(sorted_fitness[i*2])
             i2 = self.fitness.index(sorted_fitness[i*2+1])
             new_pop.extend(self.mating(self.population[i1], self.population[i2]))
@@ -364,14 +364,17 @@ class AIPlayer(Player):
         # the next gene. ????
         # TODO: go to next gene to evaluate for next game. If at end of stack then generate two new genes based on fitness
 
+        if len(self.fitness_list_per_gene) < self.games_per_gene:
+            # Take the average of all games played with gene
+            print(str(len(self.fitness_list_per_gene)))
 
-        if self.pop_index + 1 == len(self.population):
+        elif self.pop_index + 1 == len(self.population):
+            print("here")
+            self.print_fitest()
             self.create_new_pop()
             self.pop_index = 0
             print(self.valid_gene(self.population[self.pop_index]))
-        elif len(self.fitness_list_per_gene) < self.games_per_gene:
-            # Take the average of all games played with gene
-            print(str(len(self.fitness_list_per_gene)))
+
         else:
             self.fitness[self.pop_index] = sum(self.fitness_list_per_gene) / len(self.fitness_list_per_gene)
             self.pop_index += 1
@@ -425,7 +428,21 @@ class AIPlayer(Player):
 
 
     def print_fitest(self):
+        orig_stdout = sys.stdout
+        print("what")
+
+        filename = 'fittest.txt'
+        if os.path.exists(filename):
+            append_write = 'a'  # append if already exists
+        else:
+            append_write = 'w'  # make a new file if not
+        file = open(filename, append_write)
+        sys.stdout = file
         index = self.fitness.index(max(self.fitness))
+        asciiPrintState(self.currentState[index])
+        file.write("\n\n")
+        sys.stdout = orig_stdout
+        file.close()
 
 
     # Writes to an output file.
