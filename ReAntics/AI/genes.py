@@ -59,7 +59,7 @@ class AIPlayer(Player):
         self.games_per_gene = 10
         self.fitness_list_per_gene = []
         self.currentState = []
-        self.size = 50
+        self.size = 500
         self.init_population(self.size)
 
 
@@ -331,6 +331,7 @@ class AIPlayer(Player):
         if len(self.fitness_list_per_gene) < self.games_per_gene:  # If gene hasn't been evaluated enough
             pass  # Play again with same gene
         elif self.pop_index + 1 == len(self.population):  # If at the end of the population size
+            self.print_fitest()
             self.fitness[self.pop_index] = sum(self.fitness_list_per_gene) / len(self.fitness_list_per_gene)
             self.create_new_pop()  # create a new one
             self.pop_index = 0  # reset pop index
