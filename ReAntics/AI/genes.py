@@ -408,6 +408,11 @@ class AIPlayer(Player):
                 return False
         return True
 
+
+    def print_fitest(self):
+        index = self.fitness.index(max(self.fitness))
+
+
     # Writes to an output file.
     def print_gene(self, gene):
         file = open('output.txt', 'w')
